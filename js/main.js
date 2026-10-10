@@ -84,11 +84,21 @@
     var current = 0;
     function show(i) {
       current = (i + imgs.length) % imgs.length;
-      imgs.forEach(function (img, k) {
-        if (k === current) img.loading = 'eager';
-        img.classList.toggle('is-active', k === current);
-      });
+      var next = imgs[current];
       dots.forEach(function (d, k) { d.setAttribute('aria-pressed', k === current); });
+      // Fotos extras só são baixadas quando a pessoa pede (economiza dados no celular)
+      if (next.dataset.src) {
+        next.srcset = next.dataset.srcset || '';
+        next.src = next.dataset.src;
+        delete next.dataset.src;
+        delete next.dataset.srcset;
+      }
+      var swap = function () {
+        imgs.forEach(function (img, k) { img.classList.toggle('is-active', k === current); });
+      };
+      // mantém a foto atual na tela até a próxima terminar de carregar
+      if (next.complete && next.naturalWidth) swap();
+      else next.addEventListener('load', swap, { once: true });
     }
     dots.forEach(function (d, k) { d.addEventListener('click', function () { show(k); }); });
     box.addEventListener('click', function (e) { if (!e.target.closest('.dots')) show(current + 1); });
